@@ -6,6 +6,7 @@ import { screen, fireEvent, getByTestId } from "@testing-library/dom";
 import userEvent from "@testing-library/user-event";
 import NewBillUI from "../views/NewBillUI.js";
 import NewBill from "../containers/NewBill.js";
+import { bills } from "../fixtures/bills";
 
 // Préparation de l'environnement de test
 beforeEach(() => {
@@ -44,41 +45,33 @@ describe("Test de l'envoi du formulaire de notes de frais", () => {
     // Vérification du résultat
     expect(screen.getByTestId("form-new-bill")).toBeTruthy();
   });
-  test("Devrait changer de page si tous les champs requis sont bien remplis", async () => {
-    // let userParsed = JSON.parse(localStorage.getItem("user"));
 
-    let email = "test@test";
-    let status = "pending";
-    let data = {
-      email: email,
-      date: "2013-06-05",
-      amount: "126",
-      pct: "10",
-      file: "image.png",
-      status: status,
-    };
+  // Le test qui échoue
+  test("Devrait changer de page si tous les champs requis sont bien remplis", async () => {
+    const data = bills[0];
+
+    userEvent.type(getByTestId(document.body, "expense-type"), data.type);
+    userEvent.type(
+      getByTestId(document.body, "amount"),
+      data.amount.toString()
+    );
     userEvent.type(getByTestId(document.body, "datepicker"), data.date);
-    userEvent.type(getByTestId(document.body, "amount"), data.amount);
-    userEvent.type(getByTestId(document.body, "pct"), data.pct);
+    userEvent.type(getByTestId(document.body, "pct"), data.pct.toString());
     userEvent.upload(
       getByTestId(document.body, "file"),
-      new File([""], data.file, { type: "image/png" })
+      new File([""], data.fileName, { type: "image/png" })
     );
-    // Soumettre le formulaire avec l'objet contenant l'email
-    // fireEvent.submit(screen.getByTestId("form-new-bill"), {
-    //   target: { data },
-    // });
-    // Action: Soumettre le formulaire avec une extension de fichier invalide
-    //fireEvent.click(getByTestId(document.body, "form-new-bill"));
 
-    // Vérification du résultat
+    // Soumettre le formulaire
     const form = screen.getByTestId("form-new-bill");
-    const handleSubmit = jest.fn(NewBill.handleSubmit);
+    const handleSubmit = jest.fn((e) => e.preventDefault());
 
     form.addEventListener("submit", handleSubmit);
-    fireEvent.submit(form);
+    userEvent.click(getByTestId(document.body, "btn-submit"));
 
-    expect(handleSubmit).toHaveBeenCalled();
-    expect(screen.getByTestId("form-new-bill")).toBeTruthy();
+    expect(screen.getByTestId("btn-new-bill")).toBeTruthy();
+
+    // On s'assure qu'on est bien renvoyé sur la page Bills
+    // expect(getByTestId(document.body, "title")).toBe("coucou");
   });
 });
