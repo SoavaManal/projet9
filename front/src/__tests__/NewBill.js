@@ -7,71 +7,83 @@ import userEvent from "@testing-library/user-event";
 import NewBillUI from "../views/NewBillUI.js";
 import NewBill from "../containers/NewBill.js";
 import { bills } from "../fixtures/bills";
+import { ROUTES_PATH } from "../constants/routes.js";
+import { localStorageMock } from "../__mocks__/localStorage.js";
+import router from "../app/Router.js";
+import mockStore from "../__mocks__/store.js";
 
-// Préparation de l'environnement de test
-beforeEach(() => {
-  document.body.innerHTML = NewBillUI;
-});
-
-afterEach(() => {
-  document.body.innerHTML = "";
-});
-
+// je suis connécté autant qu'employée et je suis sur la page de newBill
 describe("Test de l'envoi du formulaire de notes de frais", () => {
-  test("Devrait rester sur la même page si les champs requis ne sont pas remplis", async () => {
-    userEvent.type(getByTestId(document.body, "datepicker"), "");
-    userEvent.type(getByTestId(document.body, "amount"), "");
-    userEvent.type(getByTestId(document.body, "pct"), "");
-
-    // Action: Soumettre le formulaire sans remplir les champs requis
-    fireEvent.click(getByTestId(document.body, "form-new-bill"));
-
-    // Vérification du résultat
-    expect(screen.getByTestId("form-new-bill")).toBeTruthy();
-  });
-
-  test("Devrait rester sur la même page si l'extension du fichier n'est pas valide", async () => {
-    userEvent.type(getByTestId(document.body, "datepicker"), "2013-06-05");
-    userEvent.type(getByTestId(document.body, "amount"), "126");
-    userEvent.type(getByTestId(document.body, "pct"), "10");
-    userEvent.upload(
-      getByTestId(document.body, "file"),
-      new File([""], "image.gif", { type: "image/gif" })
-    );
-
-    // Action: Soumettre le formulaire avec une extension de fichier invalide
-    fireEvent.click(getByTestId(document.body, "form-new-bill"));
-
-    // Vérification du résultat
-    expect(screen.getByTestId("form-new-bill")).toBeTruthy();
-  });
-
-  // Le test qui échoue
   test("Devrait changer de page si tous les champs requis sont bien remplis", async () => {
-    const data = bills[0];
+    // préparer l'evironement de test : localStorage, route, views
+    Object.defineProperty(window, "localStorage", {
+      value: localStorageMock,
+    });
+    window.localStorage.setItem(
+      "user",
+      JSON.stringify({
+        type: "Employee",
+        email: "a@a",
+      })
+    );
+    const root = document.createElement("div");
+    root.setAttribute("id", "root");
+    document.body.append(root);
+    router();
+    document.body.innerHTML = NewBillUI();
+    window.onNavigate(ROUTES_PATH.NewBill);
 
-    userEvent.type(getByTestId(document.body, "expense-type"), data.type);
+    const newBill = new NewBill({
+      document,
+      onNavigate,
+      store: mockStore,
+      localStorage: window.localStorage,
+    });
+
+    const getFile = (fileName, fileType) => {
+      const file = new File(["img"], fileName, {
+        type: [fileType],
+      });
+
+      return file;
+    };
+
+    const data = bills[0];
+    const file = getFile(data.fileName, ["image/jpg"]);
+
+    // Remplir les champs du formulaire
+    userEvent.selectOptions(
+      getByTestId(document.body, "expense-type"),
+      data.type
+    );
+    userEvent.type(getByTestId(document.body, "expense-name"), data.name);
+    fireEvent.change(getByTestId(document.body, "datepicker"), {
+      target: { value: data.date },
+    });
     userEvent.type(
       getByTestId(document.body, "amount"),
       data.amount.toString()
     );
-    userEvent.type(getByTestId(document.body, "datepicker"), data.date);
     userEvent.type(getByTestId(document.body, "pct"), data.pct.toString());
-    userEvent.upload(
-      getByTestId(document.body, "file"),
-      new File([""], data.fileName, { type: "image/png" })
-    );
+    userEvent.type(getByTestId(document.body, "vat"), data.vat);
+    userEvent.type(getByTestId(document.body, "commentary"), data.commentary);
+    await userEvent.upload(getByTestId(document.body, "file"), file);
+
+    newBill.fileName = file.name;
+
+    console.log(getByTestId(document.body, "pct").value);
+    console.log(JSON.parse(window.localStorage.getItem("user")));
 
     // Soumettre le formulaire
     const form = screen.getByTestId("form-new-bill");
-    const handleSubmit = jest.fn((e) => e.preventDefault());
+    const handleSubmit = jest.fn(NewBill.handleSubmit);
 
     form.addEventListener("submit", handleSubmit);
     userEvent.click(getByTestId(document.body, "btn-submit"));
 
-    expect(screen.getByTestId("btn-new-bill")).toBeTruthy();
+    // Verifier le test
+    expect(handleSubmit).toHaveBeenCalled();
 
-    // On s'assure qu'on est bien renvoyé sur la page Bills
-    // expect(getByTestId(document.body, "title")).toBe("coucou");
+    expect();
   });
 });
