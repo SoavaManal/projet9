@@ -33,9 +33,10 @@ describe("Test de l'envoi du formulaire de notes de frais", () => {
     document.body.innerHTML = NewBillUI();
     window.onNavigate(ROUTES_PATH.NewBill);
 
+    console.log(JSON.parse(window.localStorage.getItem("user")));
     const newBill = new NewBill({
       document,
-      onNavigate,
+      onNavigate: jest.fn(),
       store: mockStore,
       localStorage: window.localStorage,
     });
@@ -79,11 +80,11 @@ describe("Test de l'envoi du formulaire de notes de frais", () => {
     const handleSubmit = jest.fn(NewBill.handleSubmit);
 
     form.addEventListener("submit", handleSubmit);
-    userEvent.click(getByTestId(document.body, "btn-submit"));
+    // userEvent.click(getByTestId(document.body, "btn-submit"));
+    fireEvent.submit(form);
 
     // Verifier le test
     expect(handleSubmit).toHaveBeenCalled();
-
-    expect();
+    expect(jest.fn()).toHaveBeenCalledWith(ROUTES_PATH["Bills"]);
   });
 });
