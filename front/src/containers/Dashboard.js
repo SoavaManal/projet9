@@ -157,8 +157,15 @@ export default class {
     }
 
     // débuggez: appliquer le foreach sur un seul bill et non tous les bills
-    // console.log(bills);
-    // console.log(filteredBills(bills, getStatus(this.index)));
+    console.log(bills);
+    console.log(filteredBills(bills, getStatus(this.index)));
+    console.log(getStatus(this.index));
+    console.log(this.index);
+    // bills.forEach((bill) => {
+    //   $(`#open-bill${bill.id}`).click((e) =>
+    //     this.handleEditTicket(e, bill, bills)
+    //   );
+    // });
     filteredBills(bills, getStatus(this.index)).forEach((bill) => {
       $(`#open-bill${bill.id}`).click((e) =>
         this.handleEditTicket(e, bill, bills)

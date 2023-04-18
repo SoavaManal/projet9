@@ -2,12 +2,7 @@
  * @jest-environment jsdom
  */
 
-import {
-  screen,
-  fireEvent,
-  getByTestId,
-  getByText,
-} from "@testing-library/dom";
+import { screen, fireEvent, getByTestId } from "@testing-library/dom";
 import "@testing-library/jest-dom";
 import NewBillUI from "../views/NewBillUI.js";
 import NewBill from "../containers/NewBill.js";
@@ -18,57 +13,59 @@ import { ROUTES, ROUTES_PATH } from "../constants/routes.js";
 import { bills } from "../fixtures/bills.js";
 import router from "../app/Router.js";
 
+// Remplacer le store par le mockStore
 jest.mock("../app/Store", () => mockStore);
+
+beforeEach(() => {
+  /* on définie la propriété localStorage de l'objet window pour 
+        utilisé une instance de stockage local "localStorageMock" pour les test*/
+  Object.defineProperty(window, "localStorage", {
+    value: localStorageMock,
+  });
+  // initialisé et stocké les données d'utilisateur
+  window.localStorage.setItem(
+    "user",
+    JSON.stringify({
+      type: "Employee",
+      email: "a@a",
+    })
+  );
+  // créer un élèment di et l'ajouter au body
+  const root = document.createElement("div");
+  root.setAttribute("id", "root");
+  document.body.append(root);
+  router();
+
+  // Oncharge les données
+  document.body.innerHTML = NewBillUI();
+  window.onNavigate(ROUTES_PATH.NewBill);
+});
+afterEach(() => {
+  /* Réinitialisé tous les mocks pour assuré que chaque
+   test s'éxécute dans un état isolé et un environement propre */
+  jest.resetAllMocks();
+  // déchargé les données
+  document.body.innerHTML = "";
+});
 
 // Test unitaire: verifier qu icons est active
 describe("Given I am connected as an employee", () => {
   describe("When I am on NewBill Page", () => {
+    // testée unitaire: si l'icons a droite est actif
     test("Then newBill icon in vertical layout should be highlighted", () => {
-      Object.defineProperty(window, "localStorage", {
-        value: localStorageMock,
-      });
-      window.localStorage.setItem(
-        "user",
-        JSON.stringify({
-          type: "Employee",
-          email: "a@a",
-        })
-      );
-      const root = document.createElement("div");
-      root.setAttribute("id", "root");
-      document.body.append(root);
-      router();
-
-      document.body.innerHTML = NewBillUI();
-      window.onNavigate(ROUTES_PATH.NewBill);
       const windowIcon = screen.getByTestId("icon-mail");
-
       expect(windowIcon).toHaveClass("active-icon");
     });
-    // Test unitaire: envoi du formulaire
+
+    // Test d'integration: POST envoi du formulaire
     describe("When I submit fields in correct format ", () => {
       test("Then I should be sent on the Bills Page", async () => {
+        // on définie la fonction onNavigate pour charger les données de la page
         const onNavigate = (pathname) => {
           document.body.innerHTML = ROUTES({ pathname });
         };
-        Object.defineProperty(window, "localStorage", {
-          value: localStorageMock,
-        });
-        window.localStorage.setItem(
-          "user",
-          JSON.stringify({
-            type: "Employee",
-            email: "a@a",
-          })
-        );
-        const root = document.createElement("div");
-        root.setAttribute("id", "root");
-        document.body.append(root);
-        router();
 
-        document.body.innerHTML = NewBillUI();
-        window.onNavigate(ROUTES_PATH.NewBill);
-
+        // créer une instance de l'objet NewBill
         const newBill = new NewBill({
           document,
           onNavigate,
@@ -129,23 +126,7 @@ describe("Given I am connected as an employee", () => {
         const onNavigate = (pathname) => {
           document.body.innerHTML = ROUTES({ pathname });
         };
-        Object.defineProperty(window, "localStorage", {
-          value: localStorageMock,
-        });
-        window.localStorage.setItem(
-          "user",
-          JSON.stringify({
-            type: "Employee",
-            email: "a@a",
-          })
-        );
-        const root = document.createElement("div");
-        root.setAttribute("id", "root");
-        document.body.append(root);
-        router();
 
-        document.body.innerHTML = NewBillUI();
-        window.onNavigate(ROUTES_PATH.NewBill);
         const form = screen.getByTestId("form-new-bill");
         const handleSubmit = jest.fn(NewBill.handleSubmit);
 
